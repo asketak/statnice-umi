@@ -1,7 +1,11 @@
 Databáze.
 
-Ukládání dat, adresace záznamů. Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování. Vyhodnocení dotazů, transformační pravidla, statistiky a odhady. Optimalizace dotazů a schématu. Transakční zpracování, výpadky a zotavení. Podobnostní vyhledávání. 
-PA152, PA128
+Ukládání dat, adresace záznamů.
+Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování
+Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.
+Optimalizace dotazů a schématu
+Transakční zpracování, výpadky a zotavení.
+Podobnostní vyhledávání. 
 
 Databáze
 
@@ -93,3 +97,172 @@ zapis bloku je paralelni, pokud jsou na ruznych discich
 Jednotlive varianty lze kombinovat
 Nejcasteji kombinace RAID1 nebo RAID5 s RADI0 (RAID1+0,RAID5+0)
 ![raid10](./raid10.png) 
+
+### Vypadky disku
+- Obcasny vypadek pri cteni/zapisu -> opakovani -> ok 
+- Vada media
+- Zniceni disku -> vymena disku 
+
+detekce - kontrolni soucty 
+opravy
+- samoopravne kody - Hamming... 
+- Stabilni ulozeni
+  - ulozeni na vice mistech stejneho disku 
+  - Zurnalovani
+
+#### Mean time to failure(MTTF)
+Prumerna doba mezi vypadky disku
+1 000 000 a vice hodin = polovina disku failne za 114 let = 0.44% za rok = AFR(Anualized failure rate)
+MeanTimeTo Repair(MTTR) = Čas od výpadku do obnovení činnosti = čas výměny vadného disku + obnovení dat
+MTTDL(Mean time to data loss) - Musi nam vypadnout dalsi disk pri opravovani jineho. Stovky tisic let pro dva zrcadlicic disk s MTTR =3 hodiny
+
+SSD jsou rychlejsi, ale zase maji presny pocet zapisu -> po jiste dobe dojde k uplnemu vypadku, V RAIDu vypadnou vsechny naraz
+
+Správa vyrovnávací paměti
+- Nektere bloky je treba nechat v pameti dele(specificke pro db) - Indexy, vyhodnocovani spojeni relaci 
+- ruzne strategie - LRU,FIFO
+
+
+## Adresace zaznamu
+
+uloziste -> datove elementy -> zaznamy -> bloky -> soubory
+
+Zaznam - Seznam souvisejicich hodnot datovych elementu
+kazdy element ma svuj typ
+- Vetsinou pevna delka 
+- Promenliva - delka na zacatku hodnoty
+
+Schema zaznamu
+- popisuje strukturu zaznamu 
+- Pocet, poradi,typy a nazvy atributu
+- promenliva vs pevna delka
+
+ 
+ulozeni zaznamu do bloku
+Bloky pevne velikosti, zaznamy bud pevne nebo promenne
+Problemy k reseni:
+- oddelovani zaznamu 
+  - pevna delka - zadny oddelovac
+    - pamatovat pocet + ukazatel na prvni zaznam
+  - Promenna delka
+    - Ukladani delek zaznamu(v hlavicce bloku)
+- rozdelovani/nerozdelovani zaznamu
+  - nerozdelovani - kazdy zaznam soucasti jednoho bloku, jednodussi ale muze plytvat mistem
+  - rozdelovani - Zaznam preteka mezi bloky, Nutne, pokud je zaznam vetsi nez blok
+- usporadani zaznamu
+  - zaznamy jsou usporadany dle nejakeho klice = sekvencni soubor
+  - efektivni cteni zaznamu v danem poradi (pro merge join, order by)
+- odkazy na zaznamy
+  - rozdelovani zaznamu 
+  - odkazy na zaznamy(indexy)
+  - Zretezni bloku(indexy)
+![index s odkazy](./index.png) 
+Adresa zaznamu
+- v pameti 
+  - prima adresace
+
+- v ulozisti
+  - sekvence bajtu popisujichc umisteni	
+  - Prima adresace
+    - Fyzicka adresa zaznamu v ulozisti - disk, stopa,povrch,blok, offset
+    - neprakticke - realkace bloku...
+  - neprima adresace
+    - zaznam ma sve ID = logicka adresa 
+    - prevodni tabulka ID,Fyzicka adresa (map table)
+    - zvysene naklady - management tabulky 
+    - vetsi flexibilita - mazani,vkladani,optimalizace ulozeni do bloku
+     
+V realu pouzivane odkazy na zaznamy
+adresa zaznamu = ID souboru + číslo bloku + offset v bloku
+Uložení bloku určuje systém souborů (file system)
+offset v bloku je offset v hlavicce, kde je link na misto v bloku, kde zacina zaznam
+![Odkazy do halvicky](./hlavicka.png) 
+
+Hlavička bloku
+ - Přítomná v každém bloku
+ - File ID (or RELATIONIDor DB ID)
+ - Typ bloku - např. záznamy typu 4, přetoková oblast, TOAST záznamy, …
+ - IDbloku (tohoto)
+ - Adresář záznamů (odkazy na data záznamů)
+ - Ukazatel na volné místo (začátek, konec)
+ - Ukazatel na další blok (např. pro indexy)
+ - Čas modifikace (popř. verze)
+
+
+Modifikace zaznamu v bloku
+- vkladani - snadne
+- Mazani - Problemove
+- Zmena
+  - Stejna velikost - jednoducha 
+  - jina velikost - smazani a vlozeni
+
+
+Mazani zaznamu
+- Pointery do smazanych zaznamu musi byt zneplatneny(nesmi odkazovat na jina data) 
+- prima adresa zaznamu - na zacatek znacku, ze smazano + oznamit volne misto
+- Neprima adresace - map table - znacka ze smazano v tabulce ID|lokace (map, table)
+- Adresa záznamu je adr. bloku + offset
+![mazani v hlavicce ](./hlavickadel.png) 
+
+vkladani zaznamu
+-nesekvencni soubor
+  - na konec - posledni blok nebo zalozime novy
+  - Do volneho mista v existujicim bloku
+- usporadany sekvencni soubor
+  - Musi byt neprima adresace nebo offset(v halvicce)
+  - Ulozit do pretokoveho bloku - odkaz na nej je soucasti hlavicky bloku 
+
+## Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování
+
+### Indexování 
+duvod - rychlejsi pristup k zaznamum nez sekvencni
+varianty
+  - konvencni indexy 
+  - B-stromy
+  - Hasovani
+
+Resime primarni klic, dle ktereho jsou serazeny zaznamy v souboru
+sekvencni soubor -> index sekvencni soubor
+![index sekvencni soubor ](./indexsek.png) 
+sekvencni soubor: zaznamy josu v nem razeny dle nejakeho primarniho klice
+Husty vs ridky index
+![husty vs ridky index](./hustyindex.png) 
+![Viceurovnovy index](./viceurovenindex.png) 
+
+Ukazatele v indexu mohou ukazovat bud primo na zaznam(blok+offset) nebo na blok(soubor+cislo bloku)
+Pokud je soubor spojity a usporadany
+  - ukazatele na bloky se nemusi ukladat, lze je spocitat 
+  - Cislo bloku lze urcit z poradi polozky v indexu napriklad
+  
+### Mazani indexu
+![husty index](./hustdup.png) 
+![ridky index](./duprid.png) 
+![Smazani hodnoty na zacatku bloku na kterou ukazuje index](./maxind.png) 
+![Smazani vsech hodnot v bloku](./ridmaz.png) 
+u husteho indexu vzdy update 
+
+### vkladani do ridkeho indexu
+pokud se vejde do bloku
+![jednoduche](./ridvklad.png) 
+Pokud ne
+![reorganizace](./reorgrid.png) 
+![pretokove bloky](./pretokblok.png) 
+
+u husteho indexu vkladani vzdy nove hodnoty do indexu, v souboru stejne reseno jako u ridkeho
+
+### Sekundarni index
+Soubor vybudovany na jinem klici nez sekundarnim
+![sekundarni index ](./sekind.png) 
+Duplicitni hodnoty klice bude opakujeme nebo lze resit tabulkou
+![sekundarni index ](./sekind2.png) 
+Nejcasteji ale vyreseno kybliky[buckets]
+![buckets ](./buckets.png) 
+
+
+
+
+
+
+
+
+Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.
