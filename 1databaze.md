@@ -3,8 +3,10 @@ Databáze.
 Ukládání dat, adresace záznamů.
 Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování
 Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.
+
 Optimalizace dotazů a schématu
 Transakční zpracování, výpadky a zotavení.
+
 Podobnostní vyhledávání. 
 
 Databáze
@@ -237,8 +239,8 @@ Pokud je soubor spojity a usporadany
 ### Mazani indexu
 ![husty index](./hustdup.png) 
 ![ridky index](./duprid.png) 
-![Smazani hodnoty na zacatku bloku na kterou ukazuje index](./maxind.png) 
-![Smazani vsech hodnot v bloku](./ridmaz.png) 
+![Smazani hodnoty na zacatku bloku na kterou ukazuje index](./mazind.png) 
+![Smazani vsech hodnot v bloku](./ridmax.png) 
 u husteho indexu vzdy update 
 
 ### vkladani do ridkeho indexu
@@ -257,7 +259,6 @@ Duplicitni hodnoty klice bude opakujeme nebo lze resit tabulkou
 ![sekundarni index ](./sekind2.png) 
 Nejcasteji ale vyreseno kybliky[buckets]
 ![buckets ](./buckets.png) 
-<<<<<<< HEAD
 U kybliku mame po ruce vsechny zaznamy s danou hodnotou, delaji se jednoduse pruniky a sjednoceni nad jednou tabulkou.
 
 Konvencni indexy shrnuti:
@@ -296,13 +297,95 @@ Preteceni
 preteceni:
 ![preteceni ](./preteceni.png) 
 Kdyz se smaze C, tak se E presune do bloku 1 a pretokova oblast se smaze
-=======
->>>>>>> 5d7179b598412bfe3482f9f52b6dbf7a67552d3f
+
+### dynamické Hasovani
+- rozsirene 
+- linearni
+
+#### rozsirene hasovani
+Vyuziti pouze nekolika prvnich bit adresy
+pridani dalsi tabulkya = adresar
+![adresar ](./adresar.png) 
+pri pridavani zaznamu bud zaznamy padnou do kybliku, nebo se kyblik rozsiri
+pokud je adresar plny, tak se musi zvetsit dvakrat(adresace jemnejsi o bit)
+Mazani - smaze klic, pokud je kyblik prazdny, muze sloucit sousedni kybliky ci dokonce adresar
+vyhody
+- efektivni pro menici se data
+- Mene plytva mistem nez staticke hasovani
+- Reorganizace je lokalni
+nevyhody
+- dalsi urovanen neprimych odkazu 
+- Adresar se zdvojnasobuje, zatimce kybliky/zaznamy rostou linearne
+
+#### linearni hasovani
+Vyuziti pouze nekolik poslednich bit adresy, zadny adresar, soubor roste linearne
+![linearni hasovani ](./linhash.png) 
+Pokud neni misto, zase pretokova oblast
+pri rozsireni souboru prerozdeli zaznamy z pretokovych oblasti
+![Stepeni kybliku ](./linstep.png) 
+vyhody
+- performance pro menici se data 
+- Mene plytva mistem nez staticke hasovani
+- lokalni reorganizace
+- Zadna dodatecna prekladova tabulka
+nevyhody
+- pretokove oblasti
 
 
+hasovani - vhodne pro select ... where a=5
+indexovani - vhodne pro select ... where a>5
 
 
+### bitmapovy (rastrovy) index
+Atribut X ma H unikatnich hodnot - vhodne pro male H
+Tabulka, pro kazdou hodnotu bitove pole o delce=pocet zaznamu v tabulce
+![Bitmapovy index ](./bitmap.png) 
+nevyhody
+- Pametova narocnost 
+- Aktualizace zaznamu
+  - nova hodnota - nove bitove pole 
+  - Novy zaznam -> rozsireni vsech poli
+vyhody
+- rychle oprace na bitech(AND,OR) 
+- pouzitelne i pro rozsahle dotazy
+- Snadna kombinace vice indexu
 
+Komprese - vetisnou v bitovem poli malo 1 hodne 0 - RLE komprese
+RLE - rezdeleni na casti, sekvence I nul nasledovana jednickou
+I ulozit binarne
+kod casti je: "delka binarniho cisla I , vlastni cislo I"
+
+implementace:
+- Nalezení bitového pole pro konkrétní hodnotu klíče
+  - pro hodnoty klice mame B+-strom a v listu odkaz na bitove pole 
+- Mám bitové pole, jak načtu záznamy?
+  - sekvencni soubor -> snadne, delka zaznamu\*pozice v bitovem poli 
+  - nebo sekundarni index pro cisla zaznamu
+- Aktualizace záznamů, co s indexem? (Cisla zaznamu jsou vetsinou fixni)
+  - smazani - prepisu na 0 ve vsech polich, nebo mam jedno pole platne/neplatne zaznamy 
+  - Vkladani - pridej na konec souboru a do bitoveho pole pripojit 1/0
+  - pokud nejsou cisla zaznamu fixni, tak reorganizace vsech poli - nepouziva se
+
+### viceklicovy index
+index pro vice atributů: select name WHERE oddělení=‘Hračky’ AND plat < 10000
+Řešení
+ - Index pro jeden atribut + filtrování
+ - Nezávislé indexy pro atributy + průnik vyhovujících
+ - Index v indexu - lze dotazy A a B z obrazku
+![index v indexu ](./indexvindexu.png) 
+ - Spojení klíčů v jeden
+   - podobne indexu pro jeden klic - generujem hodnotu klice z atributu(spojeni retezcu, kombinace cisel)
+   - prilis se nepouziva v indexovani
+   - v hasovani: delena hasovaci funkce(partitioned has function)
+
+Delena hasovaci funkce
+dva klice - dve hasovaci funkce - jejich vystup spojim(concat)
+![delena hash funkce ](./delenahash.png) 
+
+#### Grid
+![grid ](./grid.png) 
+V mrizce odkazy na kyblik
+Nutne vymyslet dobre rozdeleni os pro mrizku, aby byla rovnomerne zaplnena
 
 
 
