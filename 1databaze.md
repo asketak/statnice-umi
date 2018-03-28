@@ -257,6 +257,7 @@ Duplicitni hodnoty klice bude opakujeme nebo lze resit tabulkou
 ![sekundarni index ](./sekind2.png) 
 Nejcasteji ale vyreseno kybliky[buckets]
 ![buckets ](./buckets.png) 
+<<<<<<< HEAD
 U kybliku mame po ruce vsechny zaznamy s danou hodnotou, delaji se jednoduse pruniky a sjednoceni nad jednou tabulkou.
 
 Konvencni indexy shrnuti:
@@ -295,6 +296,8 @@ Preteceni
 preteceni:
 ![preteceni ](./preteceni.png) 
 Kdyz se smaze C, tak se E presune do bloku 1 a pretokova oblast se smaze
+=======
+>>>>>>> 5d7179b598412bfe3482f9f52b6dbf7a67552d3f
 
 
 
