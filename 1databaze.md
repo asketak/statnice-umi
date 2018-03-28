@@ -257,6 +257,44 @@ Duplicitni hodnoty klice bude opakujeme nebo lze resit tabulkou
 ![sekundarni index ](./sekind2.png) 
 Nejcasteji ale vyreseno kybliky[buckets]
 ![buckets ](./buckets.png) 
+U kybliku mame po ruce vsechny zaznamy s danou hodnotou, delaji se jednoduse pruniky a sjednoceni nad jednou tabulkou.
+
+Konvencni indexy shrnuti:
+ridke vs huste
+u vkladani/mazani resime duplicitni klice
+
+jsou jednoduche a index je sekvencni soubor = jednoduchy full scan
+Draha katualizace a casem ztrate sekvencnosti a vyvazenosti kvuli pretokovym oblastem
+
+## B-stromy
+
+Neni nutne sekvencni usporadani a garance I/O pro pristup(protoze jsou vyvazene)
+vice variant - B,B-,B+...
+Obvykle se mysli B-strom = B+-strom
+![vnitrni uzel b+ stromu pro n=4 ](./vnitrniuzelb.png) 
+listovy uzel
+![listovy uzel b+ stromu pro n=4 ](./listb.png) 
+vkladani - najit list a vlozit klic
+  - bez reorganizace 
+  - nebo stepeni list
+  - nebo stepeni vntrniho uzlu
+  - novy koren
+Ma vetsi rezii nez klsicky index ale zase se sam pomalu reorganizue
+
+## Hasovani
+Funkce vracejici adresu(v bucketu) pro vstupni klic
+Zase se pouzivaji buckety viz vyse. 
+Hasovaci funkce by mela byt rovnomerna a nahodna.
+
+kolize - dve vstupni hodnoty funkce jdou na jeden vystup.
+       - Neni problem, pokud lze na jedne adrese ulozit vice klicu
+
+Preteceni
+  - kapacita kybliku je naplnea 
+  - vytvorime pretokovou oblast, kam nove hodnoty dame a link na ni dame do kybliku
+preteceni:
+![preteceni ](./preteceni.png) 
+Kdyz se smaze C, tak se E presune do bloku 1 a pretokova oblast se smaze
 
 
 
