@@ -389,4 +389,88 @@ Nutne vymyslet dobre rozdeleni os pro mrizku, aby byla rovnomerne zaplnena
 
 
 
-Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.
+## Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.
+
+dotaz -> kontrola syntaxe a semantiky -> logicky plan -> fyzicky plan -> vyhodnoceni
+
+priklad: select B,D from R,S where R.C=S.C and R.A=‘c’ and S.E=2
+
+vice zpusobu(planu) jak provezt:
+nejdriv kartezsky soucin z tabulek, pak vyber zaznamu, pak projekce
+![relacni algebra planu ](./relab.png) 
+nejdriv vyber, pak natural join a pak projekce
+![relacni algebra planu 2](./relab2.png) 
+plan 3 - mame indexy pro R.A a S.C
+pouzijeme index R.A k nalezeni R.A = 'c'
+pro kazdou R.C pouzijeme index S.C pro nalezeni odpovidajicich zaznamu v S
+vyfiltrujem zaznamy S: S.E != 2
+spojime zaznamy R,S a provedeme projekci na atributy B,D
+![optimalizace dotazů schema](./optdot.png) 
+
+
+### transformační pravidla
+
+Plan dotazu v relacni algebre muzem transformovat pomoci transformacnich pravidel na jiny plan
+Oba plany musi vracet stejne zaznamy(byt ekvivalentni)
+
+projekce_a(x) - zahodim z X vsechny sloupce krome a
+selkce_p1(x) - zahodim z X vsechny radky nesplnujici p1
+
+
+![natural join](./naturaljoin.png) 
+To stejne pro kartezsky soucin (X) a sjednoceni (U)
+![selekce](./selekce.png) 
+![projekce](./projekce.png) 
+![vztah joinu a projekce ](./joinproj.png) 
+![vztah selekce a projekce ](./projsel.png) 
+
+Vetsina z nich je pomerne intuitivni, kdyz posouvam projekci "do zavorek" tak si
+v ni nesmim odebrat sloupce, ktere budu dal potrebovat. Selekci nad dvema podminkama
+mohu rozebrat po jednotlivych podminkach. Spousta veci je komutativnich a asociativnich.
+Posledni rovnice na obrazku nize: Z = vsechny promenne, ktere jsou pouzity v selekci
+![vhodne transformace ](./goodtrans.png) 
+
+Dobre transformace:
+- projekce co nejdriv(nejvnitrneji) 
+- selekce co nejdriv(nejvnitrneji)
+- Eliminace spolecnych podvyrazu a duplicit
+
+### statistiky a odhady
+
+zpracovani dotazu
+- uroven relacni algebry
+  - transformacni pravidla a jejich pouziti 
+- Uroven podrobneho planu
+  - Odhad ceny
+  - Vytvoreni a porovnani planu
+Cena - odhad velikosti vysledku a z toho odhad vstupne/vystupnich operaci
+
+statistiky - nutne je mit aktualni pro spravne odhady
+T(R) –početzáznamů
+S(R) –velikost záznamu v bajtech
+S(R,A) –velikost atributu (hodnoty) v bajtech
+B(R) –počet obsazených bloků
+V(R, A)–počet unikátních hodnot atributu A
+![statistiky ](./stats.png) 
+
+Kartézský součin W = R1 X R2
+T(W) = T(R1) * T(R2)
+S(W) = S(R1) + S(R2)
+
+selekce W = D_ <sub>Z=val</sub>(R)
+S(W) = S(R)
+predopkladame rovnomerne rozlozeni hodnot atributu = odhad : T(W) = T(R)/V(R,A)
+Pro selekci dle rozsahu Z>val
+  - bud defaultne T(W) = T(R)/2 
+  - Odhad dle velikosti rozsahu - pomer, kolik procent hodnot rozsah pokryva
+
+pro naturaljoin zalezi, jaka tabulka ma vice ruznych hodnot, kteryma ohranicime kartezsky soucin
+![Velikost pro natural join ](./veljoin.png) 
+![Velikost pro projekci a selekci ](./selproj.png) 
+
+pro sjednoci, prunik a rozdil je odhad T(W) nejaky chytry prumer radku, ktere z toho ocekavame
+
+Statistiky se prilis nemeni, nemeli bychom je aktualizovat prilis casto, mohou byt uzkym mistem
+i nepresne statistiky jsou uzitecne
+
+
