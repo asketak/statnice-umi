@@ -473,4 +473,141 @@ pro sjednoci, prunik a rozdil je odhad T(W) nejaky chytry prumer radku, ktere z 
 Statistiky se prilis nemeni, nemeli bychom je aktualizovat prilis casto, mohou byt uzkym mistem
 i nepresne statistiky jsou uzitecne
 
+## Optimalizace dotazů a schématu
+Dotaz -> vygeneruje nekolik planu -> odhadneme cenu kazdeho z nich -> zvolime nejlepsi
+Pri generovani planu
+- transformacni pravidla rel algebry 
+- implementace operaci rel. algebry
+- pouziti existujicich indexu ci vytvareni novych
 
+Odhad ceny planu
+- Dle ceny provedeni kazde operace(jeji implementace) 
+- CPU rychlejsi nez cteni z disku, zanedbavame jeho cenu
+- igrnorovani vyrovanavacich pameti mezi dotazy
+- odhad ceny = pocet cteni a zapisu z disku
+
+B(R) –velikost relace Rv blocích
+f(R) –max. počet záznamů relace v bloku
+M –max. dostupná RAM v blocích
+
+caste pouzivani iteratoru
+- cely vysledek neni nutno generovat naraz a tak nezabira pamet
+- operace lze retezit
+
+Table scan
+ - cteni je B(R) pokud je relace shlukovana(neni rozhazena ve vice blocich),
+ - pokud kazdej radek v jinem bloku tak az T(R) 
+
+jednopruchodove algoritmy
+- cteni relace -> zpracovani -> vystupni pamet 
+- zpracovani zaznam po zaznamu
+- projekce,selkce, ruseni duplicit, agregacni funkce, kartezsky soucin
+- pro unarni B(R) pro binarni B(r) + B(S)
+
+Dvoupruchodove
+- predzpracovani vstupu -> ulozeni 
+- Zpracovani
+- spojeni relaci, agregacni funkce, mnozinove operace
+- ruzne typy joinu na zaklade ruznych indexu
+
+Ladeni dotazu
+- explain - ukaze plan a odhadnutou cost jednotlivych podoperaci
+- explain analyze - provede prikaz a ukaze realnou cost
+
+- Lokalni zmena - prepsani dotazu
+  - Použití indexů
+  - Rušení nadbytečných DISTINCT
+  - (Korelované) poddotazy
+  - Dočasné tabulky
+  - Používání HAVING
+  - Používání pohledů (VIEW)
+  - Uložené pohledy (materializedviews)
+
+Databazove spouste(triggers)
+  - nezavisle na aplikaci
+  - procedury, spousti se dotazem
+  - dodatecne naklady
+
+- globalni zmena
+  - vytvoreni indexu 
+  - zmena schematu
+  - rozdeleni transakci
+
+indexy zryhluji select ale zpomaluji vse ostatni
+  - je nutne je dobre navrhnout
+  - vytvorit davku tipickych prikazu
+  - zkusit ruzne indexy a vybrat konfiguraci s nejmensi cenou
+
+zmena schematu
+  - Stejna data lze ulozit ruznymi zpusoby 
+![Ruzna schemata ](./schema.png) 
+  - Casty pristup k adrese -> schema 1 lepsi
+  - Mnoho objednavek -> 1 plytva mistem a relace zabere vic bloku
+
+Dekompozice a normalove formy:
+http://statnice.dqd.cz/home:prog:ap9
+
+## Transakční zpracování, výpadky a zotavení.
+
+Chceme, aby data byla stale bezesporna a spravna.
+![integritni omezeni ](./integrita.png) 
+
+
+Integritni omezeni nemusi zajistit uplnou spravnost:
+napr: Pro smazání bankovního účtu musí platit: balance = 0
+
+DB nemuze by konzistentni stale:
+priklad : TOTAL = suma penez na vsech uctech
+vlozeni penez na ucet : ucet = ucet + 100, TOTAL = TOTAL + 100
+neprovede se najednou
+
+Reseni nekonzistenci je transakceo
+Transakce zacina a konci v konzistentnim stavu
+Transakce muze selhat - chyba transakce, DB, hw...
+Duvody nezadouci ale ocekavane - reset procesoru, ztrate obsahu RAM\
+nebo nezadouci neocekavane - ztrata dat na disku, pozar...
+
+Resime redundanci dat, lepsi pameti..
+Organizace pametik
+![transakce ](./transakce.png) 
+transakce je atomicka, bud se provedou vsechny jeji casti nebo zadna.
+Transakce maji poradi, zamykaji data, ktera meni.
+Nemuze se stat, ze transakce B precte pulku tabulky pred transakci A a druhou pulku po A, pokud A data v tabulce meni.
+Implementovano tak, ze logujem zmeny = Zurnalovani
+Transakce produkuje zurnal -> pri vypadku muzem znovu provezt/zrusit (REDO/UNDO) operace zaznamenane v zurnalu
+
+undo logging - zmeny jsou ihned zapsany na disk s informacema o starych datech
+pokud problem - tak se zmeny ze zurnalu odstrani a db se vrati do prechoziho stavu
+
+redo logging
+- zmeny proveden transakci jsou ukladany pozdeji(pri potvrzeni) 
+- Pri obnove ignorovany nedokoncene transakce
+- Zurnal se musi ukladat driv nez update DB - zurnaluji se nove hodnoty
+
+Obnova by byla pomala - redo hodne transakci dozadu
+resenim jsou checkpoint - kontrolni body
+checkpoint
+
+1. Přestaň přijímat nové transakce
+2. Počkej na ukončení všech transakcí
+3. Ulož všechny záznamy žurnálu na disk
+4. Ulož všechny bloky na disk (DB)
+5. Zapiš záznam „checkpoint“ na disk do žurnálu
+6. Pokračuj ve zpracování transakcí
+
+obnova - najdi posledni checkpoint a od nej delej obnovu
+![undo/redo logging ](./undored.png) 
+u undo/redo logging obnova:
+- Ukončené transakce zopakujeme (redo) od začátku
+- Nedokončené transakce vrátíme (undo) od konce
+
+#### Jednoduche checkpointy jsou bottleneck
+Delaji se prubezne kontrolni body - (Non-quiescent Checkpoint)
+- Evidence nedokončených transakcí 
+- UNDO/REDO logging: všechny změněné záznamy (bloky) jsou uloženy na disk
+
+Obnova z vypadku
+  - zpetny pruchod - vrat vsechny nepotvrzene transakce od nyni az po posledni checkpoint 
+  - Dopredny pruchod - vem posledni checkpoint a zopakuj vsechny potrvzene transakce
+  
+Zurnal idealne na samostatnem disku, aby bylo sekvencni read/write a nezavisel na selhani disku s DB
