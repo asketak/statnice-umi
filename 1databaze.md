@@ -1,13 +1,15 @@
 Databáze.
 
 [Ukládání dat](#ukládání-dat)
-[adresace záznamů](#adresace-záznamů)
+[adresace záznamů](#adresace-zaznamu)
 
 [Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování](#indexování-a-hašování-pro-více-atributů-bitmapové-indexy-dynamické-hašování)
+
 [Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.](#vyhodnocení-dotazů-transformační-pravidla-statistiky-a-odhady)
 
 [Optimalizace dotazů a schématu](#optimalizace-dotazů-a-schématu)
-[Transakční zpracování, výpadky a zotavení.](#transakční-zpracování-výpadky-a-zotavení.)
+
+[Transakční zpracování, výpadky a zotavení.](#transakční-zpracování-výpadky-a-zotavení)
 
 [Podobnostní vyhledávání.](#Podobnostní-vyhledávání.) 
 
