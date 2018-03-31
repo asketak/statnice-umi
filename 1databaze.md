@@ -1,33 +1,35 @@
 Databáze.
 
-Ukládání dat, adresace záznamů.
-Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování
-Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.
+[Ukládání dat](#Ukládání-dat)
+[adresace záznamů.](adresace-záznamů)
 
-Optimalizace dotazů a schématu
-Transakční zpracování, výpadky a zotavení.
+[Indexování a hašování pro více atributů, bitmapové indexy, dynamické hašování](#Indexování-a-hašování-pro-více-atributů,-bitmapové-indexy,-dynamické-hašování)
+[Vyhodnocení dotazů, transformační pravidla, statistiky a odhady.](#Vyhodnocení-dotazů,-transformační-pravidla,-statistiky-a-odhady.)
 
-Podobnostní vyhledávání. 
+[Optimalizace dotazů a schématu](#Optimalizace-dotazů-a-schématu)
+[Transakční zpracování, výpadky a zotavení.](#Transakční-zpracování,-výpadky-a-zotavení.)
 
-Databáze
+[Podobnostní vyhledávání.](#Podobnostní-vyhledávání.) 
+
+## Databáze
 
 Pouzivame pro efektivni ukladani, vyhledavani a zpracovani dat.
 
-Storage Manager
-	správa bloků na disku
-	správa vyrovnávací paměti
-Query Processor
-	překlad dotazu, optimalizace
-	vyhodnocení dotazu
-Transaction Manager
-	atomičnost, izolovanost a trvalost transakcí
+- Storage Manager
+	- správa bloků na disku
+	- správa vyrovnávací paměti
+- Query Processor
+	- překlad dotazu, optimalizace
+	- vyhodnocení dotazu
+- Transaction Manager
+	- atomičnost, izolovanost a trvalost transakcí
 
 DBMS - Database management system - sada nastroju pro ukladani dat
 
 Relační model
-  Struktura –data v relacích (tabulkách)
-  Operace –dotazování, modifikace
-  SQL, relační algebra
+  - Struktura –data v relacích (tabulkách)
+  - Operace –dotazování, modifikace
+  - SQL, relační algebra
 
 ## Ukládání dat
 
@@ -611,3 +613,7 @@ Obnova z vypadku
   - Dopredny pruchod - vem posledni checkpoint a zopakuj vsechny potrvzene transakce
   
 Zurnal idealne na samostatnem disku, aby bylo sekvencni read/write a nezavisel na selhani disku s DB
+
+
+## Podobnostní vyhledávání. 
+
